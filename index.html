@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tools for IELTS Teachers</title>
+<meta name="description" content="A growing collection of free tools for IELTS teachers and learners: Writing, Reading, Listening, Speaking, Vocabulary and Grammar.">
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --surface: #ffffff;
+    --text: #1d2433;
+    --muted: #5d6679;
+    --border: #e2e6ef;
+    --accent: #2f5bea;
+    --accent-soft: #e8eefe;
+    --shadow: 0 1px 3px rgba(20, 30, 60, .08), 0 4px 14px rgba(20, 30, 60, .05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151c;
+      --surface: #1b202b;
+      --text: #e8ebf3;
+      --muted: #9aa3b5;
+      --border: #2b3242;
+      --accent: #7c9bff;
+      --accent-soft: #232c47;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  header { padding: 56px 0 28px; text-align: center; }
+  header h1 { margin: 0 0 10px; font-size: clamp(1.9rem, 4vw, 2.7rem); letter-spacing: -.02em; }
+  header p { margin: 0 auto; max-width: 620px; color: var(--muted); font-size: 1.05rem; }
+
+  .toolbar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg);
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .toolbar .wrap { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips a {
+    text-decoration: none; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 6px 14px; border-radius: 999px; font-size: .9rem;
+    transition: background .15s, border-color .15s;
+  }
+  .chips a:hover { background: var(--accent-soft); border-color: var(--accent); }
+  #search {
+    flex: 0 1 260px; padding: 8px 14px; font-size: .95rem;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface); color: var(--text);
+  }
+  #search:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  main { padding: 12px 0 56px; }
+  section { margin-top: 40px; scroll-margin-top: 80px; }
+  section h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 1.5rem; }
+  section h2 .count {
+    font-size: .8rem; font-weight: 600; color: var(--accent);
+    background: var(--accent-soft); padding: 2px 10px; border-radius: 999px;
+  }
+  section > p.desc { margin: 0 0 16px; color: var(--muted); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .card {
+    display: flex; flex-direction: column; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px; text-decoration: none; color: inherit;
+    box-shadow: var(--shadow);
+    transition: transform .15s, border-color .15s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .card h3 { margin: 0; font-size: 1.05rem; color: var(--accent); }
+  .card p { margin: 0; color: var(--muted); font-size: .92rem; flex: 1; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag {
+    font-size: .72rem; padding: 2px 9px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--muted);
+  }
+  .empty {
+    border: 1px dashed var(--border); border-radius: 14px;
+    padding: 20px; color: var(--muted); text-align: center; font-size: .95rem;
+  }
+  #no-results { display: none; text-align: center; color: var(--muted); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Tools for IELTS Teachers</h1>
+    <p>A growing collection of free, ready-to-use tools for IELTS classes. Pick a skill below and open a tool in your browser.</p>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="wrap">
+    <nav class="chips" id="chips" aria-label="Categories"></nav>
+    <input id="search" type="search" placeholder="Search tools…" aria-label="Search tools">
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="content"></div>
+  <p id="no-results">No tools match your search.</p>
+</main>
+
+<script>
+/* =====================================================================
+   HOW TO ADD A NEW TOOL
+   1. Upload your new .html file to the same folder (or a subfolder) on GitHub.
+   2. Find the right category below and add one line inside its "tools" list:
+
+      { title: "Tool name", file: "writing/task2-planner.html",
+        description: "One short sentence about what it does.",
+        tags: ["Task 2", "Band 6-7"] },
+
+   - "file" is the path to your html file, relative to this index.html
+   - "tags" is optional (you can delete it)
+   - Add a new category by copying a whole { id: ..., tools: [...] } block.
+   ===================================================================== */
+
+const CATEGORIES = [
+  {
+    id: "writing",
+    name: "Writing",
+    description: "Task 1 and Task 2 planning, practice and feedback tools.",
+    tools: [
+      // { title: "Task 2 Essay Planner", file: "writing/task2-planner.html", description: "Plan an argument essay step by step.", tags: ["Task 2"] },
+    ]
+  },
+  {
+    id: "reading",
+    name: "Reading",
+    description: "Question-type practice, skimming and scanning tools.",
+    tools: []
+  },
+  {
+    id: "listening",
+    name: "Listening",
+    description: "Audio practice, note-taking and answer-checking tools.",
+    tools: []
+  },
+  {
+    id: "speaking",
+    name: "Speaking",
+    description: "Part 1, 2 and 3 prompts, cue cards and fluency practice.",
+    tools: []
+  },
+  {
+    id: "vocabulary",
+    name: "Vocabulary",
+    description: "Topic vocabulary, collocations and academic word practice.",
+    tools: []
+  },
+  {
+    id: "grammar",
+    name: "Grammar",
+    description: "Sentence structures and grammar for higher band scores.",
+    tools: []
+  },
+  {
+    id: "classroom",
+    name: "Classroom Resources",
+    description: "Timers, band descriptors, mock test helpers and more.",
+    tools: []
+  }
+];
+
+/* ---------- Rendering (no need to edit below this line) ---------- */
+const content = document.getElementById("content");
+const chips = document.getElementById("chips");
+const search = document.getElementById("search");
+const noResults = document.getElementById("no-results");
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function render(query = "") {
+  const q = query.trim().toLowerCase();
+  let totalShown = 0;
+  let html = "";
+
+  CATEGORIES.forEach(cat => {
+    const tools = cat.tools.filter(t =>
+      !q || [t.title, t.description, (t.tags || []).join(" ")].join(" ").toLowerCase().includes(q)
+    );
+    if (q && tools.length === 0) return;
+    totalShown += tools.length;
+
+    const cards = tools.length
+      ? `<div class="grid">${tools.map(t => `
+          <a class="card" href="${esc(t.file)}">
+            <h3>${esc(t.title)}</h3>
+            <p>${esc(t.description || "")}</p>
+            ${t.tags && t.tags.length ? `<div class="tags">${t.tags.map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div>` : ""}
+          </a>`).join("")}</div>`
+      : `<div class="empty">Tools coming soon.</div>`;
+
+    html += `
+      <section id="${esc(cat.id)}">
+        <h2>${esc(cat.name)} <span class="count">${cat.tools.length}</span></h2>
+        <p class="desc">${esc(cat.description || "")}</p>
+        ${cards}
+      </section>`;
+  });
+
+  content.innerHTML = html;
+  noResults.style.display = q && totalShown === 0 ? "block" : "none";
+}
+
+chips.innerHTML = CATEGORIES.map(c => `<a href="#${esc(c.id)}">${esc(c.name)}</a>`).join("");
+search.addEventListener("input", e => render(e.target.value));
+render();
+</script>
+</body>
+</html>
