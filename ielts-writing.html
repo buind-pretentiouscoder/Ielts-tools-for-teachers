@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>IELTS Writing Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Literata:wght@400;600&family=Public+Sans:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Layout: one quiet working surface, like an exam booklet. Pick a task, then question on the left and a large answer sheet on the right, then a hand-off page with the locked PDF. */
+:root {
+  --bg: #EDF0F5;
+  --surface: #FFFFFF;
+  --surface-2: #F4F6FA;
+  --ink: #16213A;
+  --ink-soft: #546079;
+  --line: #CDD5E3;
+  --accent: #1F4FD6;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E2E9FB;
+  --mark: #FFE27A;
+  --ok: #1B7A4B;
+  --warn: #A8501A;
+  --danger: #B3261E;
+  --display: "Literata", Georgia, "Times New Roman", serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1424; --surface: #161F35; --surface-2: #1C2744; --ink: #E7ECF6; --ink-soft: #9CA9C4;
+    --line: #2B3858; --accent: #8FA8FF; --accent-ink: #0E1424; --accent-soft: #222F57; --mark: #6B5A12;
+    --ok: #62D69E; --warn: #F2A872; --danger: #FF9A92; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1424; --surface: #161F35; --surface-2: #1C2744; --ink: #E7ECF6; --ink-soft: #9CA9C4;
+  --line: #2B3858; --accent: #8FA8FF; --accent-ink: #0E1424; --accent-soft: #222F57; --mark: #6B5A12;
+  --ok: #62D69E; --warn: #F2A872; --danger: #FF9A92; color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--body); }
+.shell {
+  max-width: 1120px; margin: 0 auto; padding-block: 20px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* header */
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+.brandwrap { display: flex; align-items: center; gap: 12px; }
+#logo { width: 46px; height: 46px; flex: none; }
+.brand { font: 600 1.25rem/1.2 var(--display); letter-spacing: -0.01em; margin: 0; }
+.brand small { display: block; font: 500 0.72rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 2px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.steps li { font: 500 0.8rem var(--mono); padding: 6px 10px; border-radius: 6px; color: var(--ink-soft); border: 1px solid transparent; }
+.steps li b { color: var(--accent); margin-right: 6px; font-weight: 500; }
+.steps li[aria-current="step"] { color: var(--ink); background: var(--surface); border-color: var(--line); }
+
+/* type */
+.h1 { font: 600 clamp(1.7rem, 4vw, 2.4rem)/1.15 var(--display); letter-spacing: -0.015em; margin: 0 0 10px; text-wrap: balance; }
+.h2 { font: 600 1.15rem/1.3 var(--display); margin: 0 0 12px; text-wrap: balance; }
+.lede { color: var(--ink-soft); max-width: 62ch; margin: 0; }
+.lbl { font: 500 0.78rem var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 6px; display: block; }
+.hint { font-size: 0.85rem; color: var(--ink-soft); margin: 8px 0 0; }
+.err { color: var(--danger); font-size: 0.9rem; margin: 8px 0 0; }
+.mono { font-family: var(--mono); }
+
+/* task cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; margin-top: 28px; }
+.task-card { appearance: none; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 12px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.task-card:hover { border-color: var(--accent); }
+.tc-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 12px; }
+.tc-name { font: 600 1.7rem/1.1 var(--display); }
+.tc-meta { font: 500 0.78rem var(--mono); background: var(--mark); color: var(--ink); padding: 3px 8px; border-radius: 4px; }
+.tc-what { font-weight: 600; }
+.tc-desc { color: var(--ink-soft); }
+.tc-crit { font: 0.76rem/1.5 var(--mono); color: var(--ink-soft); border-top: 1px solid var(--line); padding-top: 12px; margin-top: 4px; }
+.tc-go { color: var(--accent); font-weight: 600; }
+
+/* writing view */
+.bar-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 18px; }
+.chip { font: 500 0.82rem var(--mono); padding: 5px 10px; background: var(--accent-soft); color: var(--ink); border-radius: 6px; }
+.link-btn { appearance: none; background: none; border: 0; padding: 4px 2px; color: var(--accent); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.workgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (min-width: 880px) { .workgrid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
+.field { display: block; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+textarea.field { resize: vertical; }
+#q { min-height: 150px; line-height: 1.55; }
+#essay { min-height: 440px; font: 400 1.06rem/1.75 var(--display); padding: 16px 18px; }
+.field:focus-visible { outline-offset: 0; border-color: var(--accent); }
+.q-block + .q-block { margin-top: 20px; }
+
+.drop { border: 2px dashed var(--line); border-radius: 8px; padding: 22px 16px; text-align: center; background: var(--surface-2); }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop-main { font-weight: 600; margin: 0 0 4px; }
+.drop-sub { color: var(--ink-soft); font-size: 0.9rem; margin: 0 0 12px; }
+.preview { margin: 0; }
+.preview img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.preview-actions { display: flex; gap: 14px; margin-top: 10px; }
+
+.meter { margin-top: 12px; }
+.meter-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-bottom: 8px; font-size: 0.9rem; }
+.count b { font: 500 1.4rem var(--mono); font-variant-numeric: tabular-nums; }
+.count-note { color: var(--ink-soft); }
+.count-note.ok { color: var(--ok); font-weight: 600; }
+.timer { margin-left: auto; font: 500 0.82rem var(--mono); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.timer.over b { color: var(--warn); }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
+.bar.done i { background: var(--ok); }
+
+.send { margin-top: 20px; }
+.send-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+.send-row .col { flex: 1 1 220px; min-width: 0; }
+.btn { appearance: none; font: 600 0.95rem var(--body); padding: 12px 20px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.small { padding: 8px 12px; font-size: 0.85rem; }
+.btn:disabled { opacity: 0.55; cursor: default; }
+
+/* hand-off view */
+.todo { list-style: none; margin: 0; padding: 0; display: grid; gap: 22px; counter-reset: s; }
+.todo > li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 14px; counter-increment: s; }
+.todo > li::before { content: counter(s); font: 500 0.95rem var(--mono); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); }
+.todo h3 { font: 600 1.05rem var(--display); margin: 3px 0 8px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
+.val { font: 500 0.92rem var(--mono); background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; overflow-wrap: anywhere; user-select: all; min-width: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.notice { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-size: 0.9rem; margin: 0 0 18px; }
+.notice .link-btn { margin-left: 8px; }
+.status-ok { color: var(--ok); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="brandwrap">
+      <canvas id="logo" width="120" height="120" role="img" aria-label="A smiling pencil"></canvas>
+      <h1 class="brand"><small>Practice for the exam</small>IELTS Writing Desk</h1>
+    </div>
+    <ol class="steps" aria-label="Progress">
+      <li id="st1"><b>1</b>Choose task</li>
+      <li id="st2"><b>2</b>Write</li>
+      <li id="st3"><b>3</b>Save</li>
+    </ol>
+  </header>
+
+  <!-- 1. choose -->
+  <section id="vChoose" aria-labelledby="chooseTitle">
+    <h2 class="h1" id="chooseTitle">Which task are you practising today?</h2>
+    <p class="lede">You will type the question, write your answer, and get a locked PDF for your teacher. Every page of the PDF carries your name and a unique stamp code.</p>
+    <div class="cards">
+      <button type="button" class="task-card" id="pick1">
+        <span class="tc-top"><span class="tc-name">Task 1</span><span class="tc-meta">20 min · 150+ words</span></span>
+        <span class="tc-what">Describe a chart, graph, table, map or process</span>
+        <span class="tc-desc">Paste the picture and the question, then report the main features in your own words.</span>
+        <span class="tc-crit">Marked on: Task Achievement · Coherence and Cohesion · Lexical Resource · Grammatical Range and Accuracy</span>
+        <span class="tc-go">Start Task 1 →</span>
+      </button>
+      <button type="button" class="task-card" id="pick2">
+        <span class="tc-top"><span class="tc-name">Task 2</span><span class="tc-meta">40 min · 250+ words</span></span>
+        <span class="tc-what">Write an essay in response to a point of view, problem or argument</span>
+        <span class="tc-desc">Paste the question, plan your ideas, and write a clear essay with a position.</span>
+        <span class="tc-crit">Marked on: Task Response · Coherence and Cohesion · Lexical Resource · Grammatical Range and Accuracy</span>
+        <span class="tc-go">Start Task 2 →</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 2. write -->
+  <section id="vWrite" hidden aria-label="Write your answer">
+    <p class="notice" id="restored" hidden>Your last draft has been restored on this device.<button type="button" class="link-btn" id="freshStart">Start fresh</button></p>
+    <div class="bar-top">
+      <span class="chip" id="taskChip">Task 2</span>
+      <span id="taskLine" class="lede"></span>
+      <button type="button" class="link-btn" id="changeTask">Change task</button>
+    </div>
+
+    <div class="workgrid">
+      <div class="panel">
+        <div class="q-block">
+          <label class="lbl" for="q">The question</label>
+          <textarea id="q" class="field" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" data-lpignore="true" writing-suggestions="false"></textarea>
+        </div>
+        <div class="q-block" id="imgBlock" hidden>
+          <p class="lbl">Diagram or chart</p>
+          <div id="drop" class="drop" tabindex="0">
+            <p class="drop-main">Paste the picture here with Ctrl+V (⌘V on a Mac)</p>
+            <p class="drop-sub">or drag an image onto this box, or</p>
+            <button type="button" class="btn ghost small" id="pickFile">Choose an image file</button>
+          </div>
+          <figure id="preview" class="preview" hidden>
+            <img id="prevImg" alt="The diagram you added for Task 1">
+            <div class="preview-actions">
+              <button type="button" class="link-btn" id="replaceImg">Replace image</button>
+              <button type="button" class="link-btn" id="removeImg">Remove image</button>
+            </div>
+          </figure>
+          <input type="file" id="imgFile" accept="image/*" hidden>
+          <p class="err" id="imgErr" role="alert" hidden></p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <label class="lbl" for="essay">Your answer</label>
+        <textarea id="essay" class="field" placeholder="Start writing here." spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" data-lpignore="true" writing-suggestions="false"></textarea>
+        <div class="meter">
+          <div class="meter-row">
+            <span class="count"><b id="wc">0</b> words</span>
+            <span class="count-note" id="wcNote"></span>
+            <span class="timer" id="timer">Writing time <b id="clock">0:00</b> / <span id="target">20:00</span></span>
+          </div>
+          <div class="bar" id="bar"><i id="barFill"></i></div>
+        </div>
+        <p class="hint">Spellcheck, autocorrect and grammar suggestions are switched off here, as in the exam. Pasting is also switched off, so type your answer yourself.</p>
+        <p class="err" id="pasteMsg" role="status" hidden>Pasting is turned off in the answer box. Please type your answer.</p>
+      </div>
+    </div>
+
+    <div class="panel send">
+      <h2 class="h2">Lock your answer as a PDF</h2>
+      <div class="send-row">
+        <div class="col">
+          <label class="lbl" for="name">Your name</label>
+          <input id="name" class="field" type="text" autocomplete="name" spellcheck="false">
+        </div>
+        <div class="col">
+          <label class="lbl" for="teacher">Teacher's name (optional)</label>
+          <input id="teacher" class="field" type="text" autocomplete="off" spellcheck="false">
+        </div>
+        <button type="button" class="btn" id="make">Create PDF</button>
+      </div>
+      <p class="hint">Check your answer first. The PDF cannot be edited afterwards.</p>
+      <p class="err" id="sendMsg" role="alert" hidden></p>
+    </div>
+  </section>
+
+  <!-- 3. hand-off -->
+  <section id="vDone" hidden aria-labelledby="doneTitle">
+    <h2 class="h1" id="doneTitle">Your PDF is ready</h2>
+    <p class="lede" id="saveMsg" role="status"></p>
+    <div class="panel" style="margin-top:24px">
+      <ol class="todo">
+        <li>
+          <div>
+            <h3>Save the PDF</h3>
+            <div class="row"><span class="val" id="fileName"></span><button type="button" class="btn small" id="saveAgain">Save file</button></div>
+            <div class="row"><span class="lbl" style="margin:0">Stamp code</span><span class="val" id="stampCode"></span></div>
+            <p class="hint">Every page carries your name, this code and a pencil stamp. It holds the question, your diagram (Task 1), your answer, the word count and your writing time. Your teacher can search and copy its text.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Give it to your teacher</h3>
+            <p class="hint" style="margin-top:0">Hand in the saved file the way your class does, for example by email or on your class platform.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="saveTxt">Save text copy (.txt)</button>
+      <button type="button" class="btn ghost" id="copyAll">Copy question and answer as text</button>
+      <button type="button" class="btn ghost" id="backEdit">Back to my answer</button>
+      <button type="button" class="btn" id="newEssay">Start a new essay</button>
+    </div>
+    <p class="hint">Going back and creating another PDF gives a new stamp code and a new time.</p>
+    <p class="hint" id="copyMsg" role="status"></p>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var TASKS = {
+    1: { label: 'Task 1', line: 'Report the main features of the diagram.', min: 150, minutes: 20,
+         ph: 'Paste the Task 1 question here. For example: The chart below shows… Summarise the information by selecting and reporting the main features.' },
+    2: { label: 'Task 2', line: 'Write an essay in response to the question.', min: 250, minutes: 40,
+         ph: 'Paste the Task 2 question here. For example: Some people think… Discuss both views and give your own opinion.' }
+  };
+  var KEY = 'ielts-desk-draft-v1';
+  var state = { view: 'choose', task: 0, question: '', essay: '', name: '', teacher: '', elapsed: 0,
+                img: null, noImageOk: false, docBlob: null, filename: '', code: '', saveStatus: '' };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var downloadsP = Promise.resolve({ save: function (o) { return new Promise(function (res, rej) { try { var b = (o.data instanceof Blob) ? o.data : new Blob([o.data], { type: 'text/plain;charset=utf-8' }); var u = URL.createObjectURL(b); var a = document.createElement('a'); a.href = u; a.download = o.filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); res({ status: 'saved' }); } catch (e) { rej({ code: 'unavailable' }); } }); } });
+
+  /* ---------- helpers ---------- */
+  function words(t) {
+    var m = String(t).match(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu);
+    return m ? m.length : 0;
+  }
+  function mmss(s) { var m = Math.floor(s / 60), r = s % 60; return m + ':' + (r < 10 ? '0' : '') + r; }
+  function asciiName(n) {
+    var s = String(n).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+    s = s.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return s || 'student';
+  }
+  function today() { var d = new Date(); var p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  function show(el, on) { el.hidden = !on; }
+
+  /* ---------- the pencil mascot ---------- */
+  function rr(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function sparkle(ctx, x, y, r) {
+    ctx.beginPath(); ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
+    ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.closePath(); ctx.fill();
+  }
+  function drawPencil(ctx, cx, cy, s, rot) {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot || 0);
+    var ink = '#16213A';
+    ctx.lineWidth = s * 0.035; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = ink;
+    ctx.fillStyle = '#FFD54A'; rr(ctx, -0.19 * s, -0.30 * s, 0.38 * s, 0.54 * s, 0.04 * s); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#FF8FAB'; rr(ctx, -0.19 * s, -0.46 * s, 0.38 * s, 0.17 * s, 0.07 * s); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#C9D3E6'; ctx.fillRect(-0.19 * s, -0.30 * s, 0.38 * s, 0.07 * s); ctx.strokeRect(-0.19 * s, -0.30 * s, 0.38 * s, 0.07 * s);
+    ctx.fillStyle = '#F2C79A'; ctx.beginPath(); ctx.moveTo(-0.19 * s, 0.24 * s); ctx.lineTo(0.19 * s, 0.24 * s); ctx.lineTo(0, 0.46 * s); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = ink; ctx.beginPath(); ctx.moveTo(-0.05 * s, 0.38 * s); ctx.lineTo(0.05 * s, 0.38 * s); ctx.lineTo(0, 0.46 * s); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(-0.07 * s, -0.06 * s, 0.022 * s, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(0.07 * s, -0.06 * s, 0.022 * s, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -0.02 * s, 0.06 * s, 0.2 * Math.PI, 0.8 * Math.PI); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,111,145,0.75)';
+    ctx.beginPath(); ctx.arc(-0.125 * s, 0, 0.03 * s, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(0.125 * s, 0, 0.03 * s, 0, 7); ctx.fill();
+    ctx.fillStyle = '#FFB703'; sparkle(ctx, 0.34 * s, -0.34 * s, 0.07 * s); sparkle(ctx, -0.36 * s, 0.06 * s, 0.05 * s);
+    ctx.restore();
+  }
+  (function () { var c = $('logo'); if (c && c.getContext) drawPencil(c.getContext('2d'), 60, 62, 104, -0.35); })();
+
+  /* ---------- views ---------- */
+  function setView(v) {
+    state.view = v;
+    show($('vChoose'), v === 'choose'); show($('vWrite'), v === 'write'); show($('vDone'), v === 'done');
+    var n = v === 'choose' ? 1 : v === 'write' ? 2 : 3;
+    for (var i = 1; i <= 3; i++) { var li = $('st' + i); if (i === n) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current'); }
+    if (v !== 'write') stopTimer();
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  function applyTask() {
+    var t = TASKS[state.task]; if (!t) return;
+    $('taskChip').textContent = t.label + (state.task === 1 ? ' · Report' : ' · Essay');
+    $('taskLine').textContent = t.line;
+    $('q').placeholder = t.ph;
+    show($('imgBlock'), state.task === 1);
+    $('target').textContent = mmss(t.minutes * 60);
+    updateCount(); renderTime();
+  }
+
+  function selectTask(n) { state.task = n; applyTask(); setView('write'); persistSoon(); }
+
+  /* ---------- counter and timer ---------- */
+  function updateCount() {
+    var t = TASKS[state.task]; if (!t) return;
+    var w = words(state.essay);
+    $('wc').textContent = w;
+    var left = t.min - w;
+    var note = $('wcNote');
+    if (left > 0) { note.textContent = left + ' more to reach the ' + t.min + '-word minimum'; note.className = 'count-note'; }
+    else { note.textContent = 'Minimum of ' + t.min + ' words reached'; note.className = 'count-note ok'; }
+    $('barFill').style.width = Math.min(100, (w / t.min) * 100) + '%';
+    $('bar').className = 'bar' + (left <= 0 ? ' done' : '');
+  }
+  var tick = null;
+  function renderTime() {
+    var t = TASKS[state.task]; if (!t) return;
+    $('clock').textContent = mmss(state.elapsed);
+    $('timer').className = 'timer' + (state.elapsed > t.minutes * 60 ? ' over' : '');
+  }
+  function startTimer() {
+    if (tick || state.view !== 'write') return;
+    tick = setInterval(function () {
+      if (document.hidden) return;
+      state.elapsed++; renderTime();
+      if (state.elapsed % 10 === 0) persistSoon();
+    }, 1000);
+  }
+  function stopTimer() { if (tick) { clearInterval(tick); tick = null; } }
+
+  /* ---------- draft ---------- */
+  var persistT = null;
+  function persistSoon() { clearTimeout(persistT); persistT = setTimeout(persist, 400); }
+  function persist() {
+    try {
+      var d = { task: state.task, question: state.question, essay: state.essay, name: state.name, teacher: state.teacher,
+                elapsed: state.elapsed, img: (state.img && state.img.dataUrl && state.img.dataUrl.length < 3000000) ? state.img.dataUrl : null };
+      localStorage.setItem(KEY, JSON.stringify(d));
+    } catch (e) {}
+  }
+  function clearDraft() { try { localStorage.removeItem(KEY); } catch (e) {} }
+  function loadDraft() { try { var r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+
+  /* ---------- image ---------- */
+  function toPng(file) {
+    return new Promise(function (res, rej) {
+      var u = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        var w = im.naturalWidth, h = im.naturalHeight;
+        URL.revokeObjectURL(u);
+        if (!w || !h) { rej(new Error('size')); return; }
+        var s = Math.min(1, 1600 / w), cw = Math.round(w * s), ch = Math.round(h * s);
+        var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+        var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cw, ch); x.drawImage(im, 0, 0, cw, ch);
+        c.toBlob(function (b) {
+          if (!b) { rej(new Error('encode')); return; }
+          var fr = new FileReader();
+          fr.onload = function () { res({ blob: b, w: cw, h: ch, url: URL.createObjectURL(b), dataUrl: fr.result }); };
+          fr.onerror = rej; fr.readAsDataURL(b);
+        }, 'image/png');
+      };
+      im.onerror = function () { URL.revokeObjectURL(u); rej(new Error('load')); };
+      im.src = u;
+    });
+  }
+  function dataUrlToBlob(d) {
+    var p = d.split(','), m = /data:([^;]+)/.exec(p[0]), bin = atob(p[1]), a = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+    return new Blob([a], { type: m ? m[1] : 'image/png' });
+  }
+  function setImage(file) {
+    show($('imgErr'), false);
+    return toPng(file).then(function (r) {
+      if (state.img) URL.revokeObjectURL(state.img.url);
+      state.img = r; state.noImageOk = false; renderImage(); persistSoon();
+    }).catch(function () {
+      var e = $('imgErr'); e.textContent = 'That file could not be read as an image. Try a PNG or JPG.'; show(e, true);
+    });
+  }
+  function renderImage() {
+    var has = !!state.img;
+    show($('drop'), !has); show($('preview'), has);
+    if (has) $('prevImg').src = state.img.url;
+  }
+  function removeImage() {
+    if (state.img) URL.revokeObjectURL(state.img.url);
+    state.img = null; renderImage(); persistSoon();
+  }
+  function imageFrom(items) {
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file' && /^image\//.test(items[i].type)) return items[i].getAsFile();
+    }
+    return null;
+  }
+
+  /* ---------- the locked PDF ---------- */
+  /* Pages are drawn as pictures and placed in the PDF, so the text cannot be edited afterwards and Vietnamese names print correctly. */
+  var PW = 1240, PH = 1754, M = 110, CW = PW - 2 * M, TOP = 130, BOTTOM = PH - 140;
+  var INK = '#16213A', SOFT = '#546079', LINE = '#CDD5E3', BLUE = '#1F4FD6';
+  var F_BODY = '"Public Sans", system-ui, sans-serif', F_SERIF = 'Literata, Georgia, serif', F_MONO = '"IBM Plex Mono", ui-monospace, monospace';
+
+  function fnv(str) { var h = 0x811c9dc5; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
+  function makeCode() {
+    var rnd = new Uint32Array(2);
+    try { crypto.getRandomValues(rnd); } catch (e) { rnd[0] = Math.random() * 4294967295; rnd[1] = Math.random() * 4294967295; }
+    var s = state.name + '|' + state.teacher + '|' + state.question + '|' + state.essay + '|' + Date.now() + '|' + rnd[0] + '|' + rnd[1];
+    var a = fnv(s) ^ rnd[0], b = fnv(s.split('').reverse().join('')) ^ rnd[1];
+    var abc = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', out = '', n;
+    n = a >>> 0; for (var i = 0; i < 4; i++) { out += abc.charAt(n % 31); n = Math.floor(n / 31); }
+    out += '-';
+    n = b >>> 0; for (var j = 0; j < 4; j++) { out += abc.charAt(n % 31); n = Math.floor(n / 31); }
+    return out;
+  }
+  function loadImg(u) { return new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = u; }); }
+  function loadFonts(sample) {
+    var specs = ['400 26px Literata', '600 54px Literata', '400 26px "Public Sans"', '600 26px "Public Sans"', '500 20px "IBM Plex Mono"'];
+    return Promise.all(specs.map(function (f) { return document.fonts.load(f, sample); })).catch(function () {});
+  }
+  function fit(ctx, text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    while (text.length > 1 && ctx.measureText(text + '…').width > maxW) text = text.slice(0, -1);
+    return text + '…';
+  }
+  function wrapPara(ctx, text, maxW) {
+    var tokens = text.split(/\s+/).filter(Boolean), lines = [], line = '';
+    tokens.forEach(function (tk) {
+      while (ctx.measureText(tk).width > maxW) {
+        var n = tk.length; while (n > 1 && ctx.measureText(tk.slice(0, n)).width > maxW) n--;
+        if (line) { lines.push(line); line = ''; }
+        lines.push(tk.slice(0, n)); tk = tk.slice(n);
+      }
+      if (!tk) return;
+      var test = line ? line + ' ' + tk : tk;
+      if (ctx.measureText(test).width <= maxW) line = test; else { lines.push(line); line = tk; }
+    });
+    if (line) lines.push(line);
+    return lines.length ? lines : [''];
+  }
+
+  function Pager() { this.pages = []; this.texts = []; this.newPage(); }
+  Pager.prototype.newPage = function () {
+    var c = document.createElement('canvas'); c.width = PW; c.height = PH;
+    var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, PW, PH); x.textBaseline = 'alphabetic';
+    this.pages.push(c); this.ctx = x; this.y = TOP;
+  };
+  Pager.prototype.need = function (h) { if (this.y + h > BOTTOM) this.newPage(); };
+  /* remember each line of text and where it sits, for the hidden text layer */
+  Pager.prototype.rec = function (text, x, y, px) { this.texts.push({ p: this.pages.length - 1, t: text, x: x, y: y, px: px }); };
+  Pager.prototype.label = function (text) {
+    this.need(110); this.y += 44;
+    this.rec(text, M, this.y, 20);
+    this.ctx.font = '500 20px ' + F_MONO; this.ctx.fillStyle = BLUE; this.ctx.fillText(text.toUpperCase(), M, this.y);
+    this.ctx.fillStyle = LINE; this.ctx.fillRect(M, this.y + 14, CW, 2); this.y += 40;
+  };
+  Pager.prototype.paragraphs = function (text, font, lh, color, gap) {
+    var self = this;
+    String(text).replace(/\r\n?/g, '\n').split('\n').forEach(function (p) {
+      if (!p.trim()) { self.y += Math.round(lh * 0.6); return; }
+      self.ctx.font = font;
+      var lines = wrapPara(self.ctx, p.trim(), CW);
+      lines.forEach(function (l) {
+        self.need(lh); self.ctx.font = font; self.ctx.fillStyle = color;
+        self.rec(l, M, self.y + lh * 0.72, 26);
+        self.ctx.fillText(l, M, self.y + lh * 0.72); self.y += lh;
+      });
+      self.y += gap;
+    });
+  };
+
+  function stampPage(ctx, text) {
+    ctx.save(); ctx.globalAlpha = 0.13; ctx.fillStyle = BLUE; ctx.font = '500 24px ' + F_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.translate(PW / 2, PH / 2); ctx.rotate(-Math.PI / 7);
+    var tw = ctx.measureText(text).width, stepX = tw + 170, stepY = 190;
+    for (var r = -12; r <= 12; r++) {
+      for (var c = -6; c <= 6; c++) {
+        var x = c * stepX + (Math.abs(r) % 2 ? stepX / 2 : 0), y = r * stepY;
+        ctx.fillText(text, x, y);
+        drawPencil(ctx, x + tw / 2 + 85, y - 10, 62, 0.25);
+      }
+    }
+    ctx.restore();
+  }
+
+  function buildPdf() {
+    var JS = window.jspdf && window.jspdf.jsPDF;
+    if (!JS) return Promise.reject(new Error('lib'));
+    var t = TASKS[state.task], w = words(state.essay), name = state.name.trim(), teacher = state.teacher.trim();
+    var code = makeCode(); state.code = code;
+    var when = new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+    state.when = when;
+    var sample = name + teacher + state.question + state.essay + 'IELTS Writing Task Student Submitted Word count Writing time';
+    return loadFonts(sample).then(function () {
+      return (state.task === 1 && state.img) ? loadImg(state.img.url) : null;
+    }).then(function (img) {
+      var pg = new Pager(), ctx = pg.ctx;
+
+      /* header */
+      drawPencil(ctx, M + 62, TOP + 52, 128, -0.35);
+      pg.rec('IELTS Writing ' + t.label, M + 160, TOP + 46, 54);
+      ctx.fillStyle = INK; ctx.font = '600 54px ' + F_SERIF; ctx.fillText('IELTS Writing ' + t.label, M + 160, TOP + 46);
+      ctx.fillStyle = SOFT; ctx.font = '500 20px ' + F_MONO; ctx.fillText('LOCKED PRACTICE ANSWER', M + 162, TOP + 88);
+      pg.y = TOP + 150; ctx.fillStyle = LINE; ctx.fillRect(M, pg.y, CW, 2); pg.y += 20;
+
+      /* details */
+      var rows = [['Student', name]];
+      if (teacher) rows.push(['For', teacher]);
+      rows.push(['Task', 'IELTS Writing ' + t.label]);
+      rows.push(['Submitted', when]);
+      rows.push(['Word count', w + ' (minimum ' + t.min + ')']);
+      rows.push(['Writing time', state.elapsed ? (Math.floor(state.elapsed / 60) + ' min ' + (state.elapsed % 60) + ' s') + ' (target ' + t.minutes + ' min)' : 'Not recorded']);
+      rows.push(['Stamp code', code]);
+      rows.forEach(function (r) {
+        ctx.fillStyle = SOFT; ctx.font = '500 19px ' + F_MONO; ctx.fillText(r[0].toUpperCase(), M, pg.y + 34);
+        ctx.fillStyle = INK; ctx.font = (r[0] === 'Stamp code' ? '500 25px ' : '600 25px ') + (r[0] === 'Stamp code' ? F_MONO : F_BODY);
+        pg.rec(r[0] + ':', M, pg.y + 34, 19); pg.rec(r[1], M + 270, pg.y + 34, 25);
+        ctx.fillText(fit(ctx, r[1], CW - 270), M + 270, pg.y + 34); pg.y += 48;
+      });
+      pg.y += 6; ctx.fillStyle = LINE; ctx.fillRect(M, pg.y, CW, 2);
+
+      /* question */
+      pg.label('Question');
+      pg.paragraphs(state.question, '400 26px ' + F_BODY, 40, INK, 12);
+
+      /* diagram */
+      if (img) {
+        pg.label('Diagram');
+        var s = Math.min(CW / img.naturalWidth, 760 / img.naturalHeight), dw = Math.round(img.naturalWidth * s), dh = Math.round(img.naturalHeight * s);
+        pg.need(dh + 20);
+        pg.ctx.drawImage(img, M, pg.y, dw, dh);
+        pg.ctx.strokeStyle = LINE; pg.ctx.lineWidth = 2; pg.ctx.strokeRect(M, pg.y, dw, dh);
+        pg.y += dh + 24;
+      }
+
+      /* answer */
+      pg.label('Answer');
+      pg.paragraphs(state.essay, '400 26px ' + F_SERIF, 44, INK, 14);
+
+      /* every page: running header, footer, and the stamp across the page */
+      var mark = name + ' · ' + (teacher ? 'for ' + teacher + ' · ' : '') + code;
+      var n = pg.pages.length;
+      pg.pages.forEach(function (c, i) {
+        var x = c.getContext('2d');
+        if (i > 0) { x.fillStyle = SOFT; x.font = '500 18px ' + F_MONO; x.textAlign = 'left'; x.fillText(fit(x, 'IELTS WRITING ' + t.label.toUpperCase() + ' · ' + name, CW), M, 80); }
+        x.fillStyle = LINE; x.fillRect(M, PH - 110, CW, 2);
+        drawPencil(x, M + 20, PH - 66, 46, -0.35);
+        x.fillStyle = SOFT; x.font = '500 18px ' + F_MONO; x.textAlign = 'left'; x.fillText('CODE ' + code, M + 56, PH - 58);
+        x.textAlign = 'right'; x.fillText('PAGE ' + (i + 1) + ' OF ' + n, PW - M, PH - 58); x.textAlign = 'left';
+        stampPage(x, mark);
+      });
+
+      var doc = new JS({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+      pg.pages.forEach(function (c, i) {
+        if (i) doc.addPage('a4', 'portrait');
+        doc.addImage(c.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        /* hidden text layer: invisible and fully transparent, so it can be searched and copied but never seen */
+        var mm = 297 / PH;
+        try { doc.setGState(new doc.GState({ opacity: 0 })); } catch (e) {}
+        doc.setFont('helvetica', 'normal');
+        pg.texts.forEach(function (tx) {
+          if (tx.p !== i) return;
+          doc.setFontSize(tx.px * mm * 2.8346);
+          doc.text(pdfSafe(tx.t), tx.x * mm, tx.y * mm, { renderingMode: 'invisible' });
+        });
+        try { doc.setGState(new doc.GState({ opacity: 1 })); } catch (e) {}
+      });
+      doc.setProperties({ title: 'IELTS Writing ' + t.label + ' - ' + name, author: name, subject: 'Stamp code ' + code, creator: 'IELTS Writing Desk' });
+      return doc.output('blob');
+    });
+  }
+
+  function plainText() {
+    var t = TASKS[state.task];
+    return 'IELTS Writing ' + t.label + '\nStudent: ' + state.name.trim() + '\nWord count: ' + words(state.essay) + ' (minimum ' + t.min + ')\n\nQUESTION\n' +
+      state.question.trim() + (state.task === 1 && state.img ? '\n[Diagram: see the PDF]' : '') + '\n\nANSWER\n' + state.essay.trim() + '\n';
+  }
+
+  /* the PDF's built-in fonts only hold basic Latin, so the hidden layer folds other letters to plain ones (Vietnamese marks are dropped) */
+  function pdfSafe(s) {
+    return String(s).replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/…/g, '...')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\x20-\x7E]/g, '?');
+  }
+  function textCopy() {
+    var t = TASKS[state.task], teacher = state.teacher.trim();
+    return 'IELTS Writing ' + t.label + '\nStudent: ' + state.name.trim() + (teacher ? '\nFor: ' + teacher : '') +
+      '\nSubmitted: ' + (state.when || '') + '\nWord count: ' + words(state.essay) + ' (minimum ' + t.min + ')' +
+      '\nWriting time: ' + (state.elapsed ? mmss(state.elapsed) + ' (target ' + t.minutes + ' min)' : 'Not recorded') +
+      '\nStamp code: ' + state.code + '\n\nQUESTION\n' + state.question.trim() +
+      (state.task === 1 && state.img ? '\n[Diagram: see the PDF]' : '') + '\n\nANSWER\n' + state.essay.trim() + '\n';
+  }
+  function saveTxt() {
+    var msg = function (t) { $('copyMsg').textContent = t; };
+    return downloadsP.then(function (dl) {
+      if (!dl) { msg('Saving a file is not available in this view.'); return; }
+      return dl.save({ filename: state.filename.replace(/\.pdf$/, '') + '.txt', data: textCopy() })
+        .then(function () { msg('Text copy saved. It has the same stamp code as the PDF.'); })
+        .catch(function (e) { msg(e && e.code === 'declined' ? 'The text copy was not saved.' : 'The text copy could not be saved. Try again.'); });
+    });
+  }
+
+  /* ---------- create and save ---------- */
+  function fail(msg, focusId) {
+    var m = $('sendMsg'); m.textContent = msg; show(m, true);
+    if (focusId) { try { $(focusId).focus(); } catch (e) {} }
+  }
+  function validate() {
+    show($('sendMsg'), false);
+    if (!state.question.trim()) { fail('Add the question your answer responds to.', 'q'); return false; }
+    if (!state.essay.trim()) { fail('Write your answer before creating the PDF.', 'essay'); return false; }
+    if (!state.name.trim()) { fail('Enter your name so your teacher knows whose work it is.', 'name'); return false; }
+    if (state.task === 1 && !state.img && !state.noImageOk) {
+      state.noImageOk = true;
+      fail('You have not added a diagram. Click "Create PDF" again to continue without one.', null);
+      return false;
+    }
+    return true;
+  }
+  function makePdf() {
+    if (!validate()) return;
+    if (!(window.jspdf && window.jspdf.jsPDF)) { fail('The PDF builder did not load. Check your connection and reload the page.', null); return; }
+    var btn = $('make'); btn.disabled = true; btn.textContent = 'Creating…';
+    stopTimer();
+    buildPdf().then(function (blob) {
+      state.docBlob = blob;
+      state.filename = 'IELTS-' + TASKS[state.task].label.replace(' ', '') + '-' + asciiName(state.name) + '-' + today() + '.pdf';
+      state.saveStatus = '';
+      fillDone(); setView('done'); persist();
+      return saveDoc();
+    }).catch(function () {
+      fail('The PDF could not be created. Try again.', null);
+    }).then(function () { btn.disabled = false; btn.textContent = 'Create PDF'; });
+  }
+  function fillDone() {
+    $('fileName').textContent = state.filename;
+    $('stampCode').textContent = state.code;
+    $('copyMsg').textContent = '';
+    renderSaveMsg();
+  }
+  function renderSaveMsg() {
+    var m = $('saveMsg'), s = state.saveStatus;
+    if (s === 'saved') { m.textContent = ''; var a = document.createElement('span'); a.className = 'status-ok'; a.textContent = 'Saved. '; m.appendChild(a); m.appendChild(document.createTextNode('Now give the PDF to your teacher.')); }
+    else if (s === 'declined') { m.textContent = 'The file was not saved. Choose "Save file" below when you are ready.'; }
+    else if (s === 'unavailable') { m.textContent = 'Saving a file is not available in this view. Open this page in claude.ai to save the PDF.'; }
+    else if (s === 'error') { m.textContent = 'The file could not be saved. Try "Save file" again.'; }
+    else { m.textContent = 'Your answer is locked in a PDF with your name and a stamp code on every page.'; }
+  }
+  function saveDoc() {
+    if (!state.docBlob) return Promise.resolve();
+    return downloadsP.then(function (dl) {
+      if (!dl) { state.saveStatus = 'unavailable'; return; }
+      return dl.save({ filename: state.filename, data: state.docBlob }).then(function () { state.saveStatus = 'saved'; })
+        .catch(function (err) {
+          var c = err && err.code;
+          state.saveStatus = c === 'declined' ? 'declined' : ((c === 'rate_limited' || c === 'bad_request' || c === 'too_large' || c === 'transform_error') ? 'error' : 'unavailable');
+        });
+    }).then(renderSaveMsg);
+  }
+
+  function flash(btn, text) {
+    var old = btn.dataset.label || btn.textContent; btn.dataset.label = old; btn.textContent = text;
+    setTimeout(function () { btn.textContent = old; }, 1600);
+  }
+  function copy(text, btn) {
+    try { navigator.clipboard.writeText(text).then(function () { flash(btn, 'Copied'); }, function () { flash(btn, 'Copy failed'); }); }
+    catch (e) { flash(btn, 'Copy failed'); }
+  }
+
+  function resetAll() {
+    stopTimer();
+    if (state.img) URL.revokeObjectURL(state.img.url);
+    state.task = 0; state.question = ''; state.essay = ''; state.name = ''; state.teacher = ''; state.elapsed = 0;
+    state.img = null; state.noImageOk = false; state.docBlob = null; state.filename = ''; state.code = ''; state.saveStatus = '';
+    $('q').value = ''; $('essay').value = ''; $('name').value = ''; $('teacher').value = '';
+    renderImage(); show($('sendMsg'), false); show($('restored'), false);
+    clearDraft(); setView('choose');
+  }
+
+  /* ---------- wiring ---------- */
+  $('pick1').addEventListener('click', function () { selectTask(1); });
+  $('pick2').addEventListener('click', function () { selectTask(2); });
+  $('changeTask').addEventListener('click', function () { setView('choose'); });
+  $('freshStart').addEventListener('click', resetAll);
+  $('q').addEventListener('input', function (e) { state.question = e.target.value; persistSoon(); });
+  $('essay').addEventListener('input', function (e) { state.essay = e.target.value; updateCount(); startTimer(); persistSoon(); });
+  $('name').addEventListener('input', function (e) { state.name = e.target.value; persistSoon(); });
+  $('teacher').addEventListener('input', function (e) { state.teacher = e.target.value; persistSoon(); });
+  $('make').addEventListener('click', makePdf);
+
+  $('pickFile').addEventListener('click', function () { $('imgFile').click(); });
+  $('replaceImg').addEventListener('click', function () { $('imgFile').click(); });
+  $('removeImg').addEventListener('click', removeImage);
+  $('imgFile').addEventListener('change', function (e) { var f = e.target.files && e.target.files[0]; if (f) setImage(f); e.target.value = ''; });
+  /* no pasting or dropping text into the answer box */
+  var essayEl = $('essay'), pasteT = null;
+  function noPaste() {
+    var m = $('pasteMsg'); show(m, true);
+    clearTimeout(pasteT); pasteT = setTimeout(function () { show(m, false); }, 3500);
+  }
+  ['paste', 'drop'].forEach(function (n) { essayEl.addEventListener(n, function (e) { e.preventDefault(); noPaste(); }); });
+  essayEl.addEventListener('dragover', function (e) { e.preventDefault(); });
+  essayEl.addEventListener('beforeinput', function (e) {
+    var t = e.inputType;
+    if (t === 'insertFromPaste' || t === 'insertFromDrop' || t === 'insertFromYank' || t === 'insertFromPasteAsQuotation') { e.preventDefault(); noPaste(); }
+  });
+  essayEl.addEventListener('keydown', function (e) {
+    var k = (e.key || '').toLowerCase();
+    if (((e.ctrlKey || e.metaKey) && k === 'v') || (e.shiftKey && k === 'insert')) { e.preventDefault(); noPaste(); }
+  });
+
+  document.addEventListener('paste', function (e) {
+    if (e.target === essayEl) return;
+    if (state.view !== 'write' || state.task !== 1 || !e.clipboardData) return;
+    var f = imageFrom(e.clipboardData.items || []);
+    if (f) { e.preventDefault(); setImage(f); }
+  });
+  var drop = $('drop');
+  ['dragenter', 'dragover'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function (e) {
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f && /^image\//.test(f.type)) setImage(f);
+    else { var m = $('imgErr'); m.textContent = 'Drop an image file (PNG, JPG, GIF or WebP).'; show(m, true); }
+  });
+
+  $('saveAgain').addEventListener('click', function () { saveDoc(); });
+  $('copyAll').addEventListener('click', function (e) { copy(plainText(), e.currentTarget); });
+  $('saveTxt').addEventListener('click', saveTxt);
+  $('backEdit').addEventListener('click', function () { setView('write'); });
+  $('newEssay').addEventListener('click', resetAll);
+
+  /* ---------- boot ---------- */
+  var d = loadDraft();
+  if (d && (d.essay || d.question)) {
+    state.task = d.task === 1 ? 1 : 2; state.question = d.question || ''; state.essay = d.essay || '';
+    state.name = d.name || ''; state.teacher = d.teacher || ''; state.elapsed = d.elapsed || 0;
+    $('q').value = state.question; $('essay').value = state.essay; $('name').value = state.name; $('teacher').value = state.teacher;
+    applyTask(); setView('write'); show($('restored'), true);
+    if (d.img && state.task === 1) { try { setImage(dataUrlToBlob(d.img)); } catch (e) {} }
+  } else {
+    setView('choose');
+  }
+  renderImage();
+})();
+</script>
+</body>
+</html>
